@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Meine Auflagen{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col">
+        <h1 class="mb-4">Meine Auflagen</h1>
+        <a href="{{ url_for('auflage_neu') }}" class="btn btn-primary mb-3"><i class="bi bi-plus-circle"></i> Neue Auflage</a>
+        {% if auflagen %}
+        <div class="list-group">
+            {% for auflage in auflagen %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ auflage.beschreibung }}</h5>
+                    <small>Erstellt am {{ auflage.erstellt_am.strftime('%d.%m.%Y') }}</small>
+                </div>
+                <p class="mb-1"><strong>Grund:</strong> {{ auflage.grund }}</p>
+                <p class="mb-1"><strong>Ziel:</strong> {{ auflage.ziel }}</p>
+                <p class="mb-1"><strong>Zeitraum:</strong> {{ auflage.zeitraum_start.strftime('%d.%m.%Y') }} bis {% if auflage.zeitraum_ende %}{{ auflage.zeitraum_ende.strftime('%d.%m.%Y') }}{% else %}unbegrenzt{% endif %}</p>
+                <div class="mt-2">
+                    <a href="{{ url_for('auflage_detail', id=auflage.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
+                    <a href="{{ url_for('auflage_bearbeiten', id=auflage.id) }}" class="btn btn-outline-secondary btn-sm">Bearbeiten</a>
+                    <form method="POST" action="{{ url_for('auflage_loeschen', id=auflage.id) }}" class="d-inline" onsubmit="return confirm('Auflage wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Löschen</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Du hast noch keine Auflagen erstellt.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

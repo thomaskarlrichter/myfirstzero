@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Auflage bearbeiten{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Auflage bearbeiten</h1>
+        <form method="POST" action="{{ url_for('auflage_bearbeiten', id=auflage.id) }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="beschreibung" class="form-label">Beschreibung der Auflage *</label>
+                <textarea class="form-control" id="beschreibung" name="beschreibung" rows="3" required>{{ auflage.beschreibung }}</textarea>
+                <div class="form-text">Was möchtest du tun oder lassen?</div>
+            </div>
+            <div class="mb-3">
+                <label for="grund" class="form-label">Grund *</label>
+                <textarea class="form-control" id="grund" name="grund" rows="3" required>{{ auflage.grund }}</textarea>
+                <div class="form-text">Warum hast du dich für diese Auflage entschieden?</div>
+            </div>
+            <div class="mb-3">
+                <label for="ziel" class="form-label">Ziel *</label>
+                <textarea class="form-control" id="ziel" name="ziel" rows="2" required>{{ auflage.ziel }}</textarea>
+                <div class="form-text">Was möchtest du damit erreichen?</div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="zeitraum_start" class="form-label">Startdatum *</label>
+                    <input type="date" class="form-control" id="zeitraum_start" name="zeitraum_start" value="{{ auflage.zeitraum_start.strftime('%Y-%m-%d') }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="zeitraum_ende" class="form-label">Enddatum (optional)</label>
+                    <input type="date" class="form-control" id="zeitraum_ende" name="zeitraum_ende" value="{% if auflage.zeitraum_ende %}{{ auflage.zeitraum_ende.strftime('%Y-%m-%d') }}{% endif %}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="erfahrungen" class="form-label">Erfahrungen (optional)</label>
+                <textarea class="form-control" id="erfahrungen" name="erfahrungen" rows="3">{{ auflage.erfahrungen if auflage.erfahrungen }}</textarea>
+                <div class="form-text">Was hast du bisher damit erlebt?</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+            <a href="{{ url_for('auflage_detail', id=auflage.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

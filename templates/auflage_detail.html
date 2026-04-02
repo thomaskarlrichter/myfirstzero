@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Auflage: {{ auflage.beschreibung[:50] }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1 class="mb-4">Auflage</h1>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ auflage.beschreibung }}</h5>
+                <p class="card-text"><strong>Grund:</strong> {{ auflage.grund }}</p>
+                <p class="card-text"><strong>Ziel:</strong> {{ auflage.ziel }}</p>
+                <p class="card-text"><strong>Zeitraum:</strong> {{ auflage.zeitraum_start.strftime('%d.%m.%Y') }} bis {% if auflage.zeitraum_ende %}{{ auflage.zeitraum_ende.strftime('%d.%m.%Y') }}{% else %}unbegrenzt{% endif %}</p>
+                <p class="card-text"><strong>Erfahrungen:</strong> {% if auflage.erfahrungen %}{{ auflage.erfahrungen }}{% else %}<em>Keine Erfahrungen eingetragen.</em>{% endif %}</p>
+                <p class="card-text text-muted"><small>Erstellt am {{ auflage.erstellt_am.strftime('%d.%m.%Y %H:%M') }}</small></p>
+                <div class="mt-3">
+                    <a href="{{ url_for('auflage_bearbeiten', id=auflage.id) }}" class="btn btn-outline-secondary btn-sm">Bearbeiten</a>
+                    <form method="POST" action="{{ url_for('auflage_loeschen', id=auflage.id) }}" class="d-inline" onsubmit="return confirm('Auflage wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Löschen</button>
+                    </form>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="mb-3">Rückfälle</h2>
+        <a href="{{ url_for('rueckfall_neu', auflage_id=auflage.id) }}" class="btn btn-primary mb-3"><i class="bi bi-plus-circle"></i> Neuer Rückfall</a>
+        {% if rueckfaelle %}
+        <div class="list-group">
+            {% for rueckfall in rueckfaelle %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ rueckfall.beschreibung[:100] }}{% if rueckfall.beschreibung|length > 100 %}...{% endif %}</h6>
+                    <small>{{ rueckfall.datum_uhrzeit.strftime('%d.%m.%Y %H:%M') }}</small>
+                </div>
+                <p class="mb-1"><strong>Gefühle:</strong> {{ rueckfall.gefuehle }}</p>
+                <p class="mb-1"><strong>Situation:</strong> {{ rueckfall.situation }}</p>
+                {% if rueckfall.lernpunkte %}<p class="mb-1"><strong>Lernpunkte:</strong> {{ rueckfall.lernpunkte }}</p>{% endif %}
+                {% if rueckfall.positives_verhalten %}<p class="mb-1"><strong>Positives Verhalten:</strong> {{ rueckfall.positives_verhalten }}</p>{% endif %}
+                <div class="mt-2">
+                    <a href="{{ url_for('rueckfall_bearbeiten', id=rueckfall.id) }}" class="btn btn-outline-secondary btn-sm">Bearbeiten</a>
+                    <form method="POST" action="{{ url_for('rueckfall_loeschen', id=rueckfall.id) }}" class="d-inline" onsubmit="return confirm('Rückfall wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Löschen</button>
+                    </form>
+                </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Noch keine Rückfälle erfasst.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

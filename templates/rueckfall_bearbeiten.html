@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Rückfall bearbeiten{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Rückfall bearbeiten</h1>
+        <form method="POST" action="{{ url_for('rueckfall_bearbeiten', id=rueckfall.id) }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="beschreibung" class="form-label">Beschreibung des Rückfalls *</label>
+                <textarea class="form-control" id="beschreibung" name="beschreibung" rows="3" required>{{ rueckfall.beschreibung }}</textarea>
+                <div class="form-text">Was ist passiert? Beschreibe den Rückfall.</div>
+            </div>
+            <div class="mb-3">
+                <label for="gefuehle" class="form-label">Gefühle *</label>
+                <textarea class="form-control" id="gefuehle" name="gefuehle" rows="3" required>{{ rueckfall.gefuehle }}</textarea>
+                <div class="form-text">Was hast du gefühlt?</div>
+            </div>
+            <div class="mb-3">
+                <label for="situation" class="form-label">Situation *</label>
+                <textarea class="form-control" id="situation" name="situation" rows="3" required>{{ rueckfall.situation }}</textarea>
+                <div class="form-text">In welcher Situation ist der Rückfall passiert?</div>
+            </div>
+            <div class="mb-3">
+                <label for="lernpunkte" class="form-label">Lernpunkte (optional)</label>
+                <textarea class="form-control" id="lernpunkte" name="lernpunkte" rows="3">{{ rueckfall.lernpunkte if rueckfall.lernpunkte }}</textarea>
+                <div class="form-text">Was hast du daraus gelernt?</div>
+            </div>
+            <div class="mb-3">
+                <label for="positives_verhalten" class="form-label">Positives Verhalten (optional)</label>
+                <textarea class="form-control" id="positives_verhalten" name="positives_verhalten" rows="3">{{ rueckfall.positives_verhalten if rueckfall.positives_verhalten }}</textarea>
+                <div class="form-text">Wie möchtest du dich in Zukunft in einer ähnlichen Situation verhalten?</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+            <a href="{{ url_for('auflage_detail', id=rueckfall.auflage_id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

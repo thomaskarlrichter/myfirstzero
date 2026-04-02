@@ -23,6 +23,10 @@ class User(UserMixin, db.Model):
         'Rueckmeldung', backref='autor', lazy='dynamic',
         cascade='all, delete-orphan'
     )
+    auflagen = db.relationship(
+        'Auflage', backref='user', lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -59,6 +63,44 @@ class Rueckmeldung(db.Model):
     datum_uhrzeit = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     wortmeldung_id = db.Column(db.Integer, db.ForeignKey('wortmeldungen.id'), nullable=False)
+    def __repr__(self):
+        return f'<Rueckmeldung {self.id} zu Wortmeldung {self.wortmeldung_id}>'
+
+class Auflage(db.Model):
+    __tablename__ = 'auflagen'
+
+    id = db.Column(db.Integer, primary_key=True)
+    beschreibung = db.Column(db.Text, nullable=False)
+    grund = db.Column(db.Text, nullable=False)
+    ziel = db.Column(db.Text, nullable=False)
+    zeitraum_start = db.Column(db.Date, nullable=False)
+    zeitraum_ende = db.Column(db.Date, nullable=True)
+    erfahrungen = db.Column(db.Text, nullable=True)
+    erstellt_am = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    rueckfaelle = db.relationship(
+        'Rueckfall', backref='auflage', lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
     def __repr__(self):
+        return f'<Auflage {self.id} von User {self.user_id}>'
+
+
+class Rueckfall(db.Model):
+    __tablename__ = 'rueckfaelle'
+
+    id = db.Column(db.Integer, primary_key=True)
+    beschreibung = db.Column(db.Text, nullable=False)
+    gefuehle = db.Column(db.Text, nullable=False)
+    situation = db.Column(db.Text, nullable=False)
+    lernpunkte = db.Column(db.Text, nullable=True)
+    positives_verhalten = db.Column(db.Text, nullable=True)
+    datum_uhrzeit = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    auflage_id = db.Column(db.Integer, db.ForeignKey('auflagen.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<Rueckfall {self.id} zu Auflage {self.auflage_id}>'
         return f'<Rueckmeldung {self.id} zu Wortmeldung {self.wortmeldung_id}>'

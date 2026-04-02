@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Neuen Rückfall erfassen{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Neuen Rückfall erfassen</h1>
+        <p class="text-muted">Auflage: <strong>{{ auflage.beschreibung[:100] }}{% if auflage.beschreibung|length > 100 %}...{% endif %}</strong></p>
+        <form method="POST" action="{{ url_for('rueckfall_neu', auflage_id=auflage.id) }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="beschreibung" class="form-label">Beschreibung des Rückfalls *</label>
+                <textarea class="form-control" id="beschreibung" name="beschreibung" rows="3" required>{{ request.form.beschreibung if request.form.beschreibung }}</textarea>
+                <div class="form-text">Was ist passiert? Beschreibe den Rückfall.</div>
+            </div>
+            <div class="mb-3">
+                <label for="gefuehle" class="form-label">Gefühle *</label>
+                <textarea class="form-control" id="gefuehle" name="gefuehle" rows="3" required>{{ request.form.gefuehle if request.form.gefuehle }}</textarea>
+                <div class="form-text">Was hast du gefühlt?</div>
+            </div>
+            <div class="mb-3">
+                <label for="situation" class="form-label">Situation *</label>
+                <textarea class="form-control" id="situation" name="situation" rows="3" required>{{ request.form.situation if request.form.situation }}</textarea>
+                <div class="form-text">In welcher Situation ist der Rückfall passiert?</div>
+            </div>
+            <div class="mb-3">
+                <label for="lernpunkte" class="form-label">Lernpunkte (optional)</label>
+                <textarea class="form-control" id="lernpunkte" name="lernpunkte" rows="3">{{ request.form.lernpunkte if request.form.lernpunkte }}</textarea>
+                <div class="form-text">Was hast du daraus gelernt?</div>
+            </div>
+            <div class="mb-3">
+                <label for="positives_verhalten" class="form-label">Positives Verhalten (optional)</label>
+                <textarea class="form-control" id="positives_verhalten" name="positives_verhalten" rows="3">{{ request.form.positives_verhalten if request.form.positives_verhalten }}</textarea>
+                <div class="form-text">Wie möchtest du dich in Zukunft in einer ähnlichen Situation verhalten?</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Rückfall speichern</button>
+            <a href="{{ url_for('auflage_detail', id=auflage.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, flash, request, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
-from models import db, User, Wortmeldung, Rueckmeldung
+from flask_migrate import Migrate
+from models import db, User, Wortmeldung, Rueckmeldung, Auflage, Rueckfall
 
 
 def create_app():
@@ -18,8 +20,8 @@ def create_app():
     app.config['WTF_CSRF_ENABLED'] = True
 
     db.init_app(app)
+    migrate = Migrate(app, db)
     CSRFProtect(app)
-
     login_manager = LoginManager(app)
     login_manager.login_view = 'login'
     login_manager.login_message = 'Bitte melde dich an, um diese Seite zu sehen.'
@@ -96,7 +98,180 @@ def create_app():
     @login_required
     def logout():
         logout_user()
-        flash('Du wurdest erfolgreich abgemeldet.', 'info')
+        return redirect(url_for('index'))
+
+    # ------------------------------------------------------------------
+    # Auflagen Routes
+    # ------------------------------------------------------------------
+
+    @app.route('/auflagen')
+    @login_required
+    def auflagen():
+        user_auflagen = current_user.auflagen.order_by(Auflage.erstellt_am.desc()).all()
+        return render_template('auflagen.html', auflagen=user_auflagen)
+
+    @app.route('/auflage/neu', methods=['GET', 'POST'])
+    @login_required
+    def auflage_neu():
+        if request.method == 'POST':
+            beschreibung = request.form.get('beschreibung', '').strip()
+            grund = request.form.get('grund', '').strip()
+            ziel = request.form.get('ziel', '').strip()
+            zeitraum_start_str = request.form.get('zeitraum_start', '')
+            zeitraum_ende_str = request.form.get('zeitraum_ende', '')
+            erfahrungen = request.form.get('erfahrungen', '').strip()
+
+            error = None
+            if not beschreibung:
+                error = 'Beschreibung ist erforderlich.'
+            elif not grund:
+                error = 'Grund ist erforderlich.'
+            elif not ziel:
+                error = 'Ziel ist erforderlich.'
+            elif not zeitraum_start_str:
+                error = 'Startdatum ist erforderlich.'
+            else:
+                try:
+                    zeitraum_start = datetime.strptime(zeitraum_start_str, '%Y-%m-%d').date()
+                    zeitraum_ende = datetime.strptime(zeitraum_ende_str, '%Y-%m-%d').date() if zeitraum_ende_str else None
+                except ValueError:
+                    error = 'Ungültiges Datumsformat. Verwende YYYY-MM-DD.'
+
+            if error:
+                flash(error, 'danger')
+            else:
+                auflage = Auflage(
+                    beschreibung=beschreibung,
+                    grund=grund,
+                    ziel=ziel,
+                    zeitraum_start=zeitraum_start,
+                    zeitraum_ende=zeitraum_ende,
+                    erfahrungen=erfahrungen,
+                    user_id=current_user.id
+                )
+                db.session.add(auflage)
+                db.session.commit()
+                flash('Auflage erfolgreich erstellt.', 'success')
+                return redirect(url_for('auflagen'))
+        return render_template('auflage_neu.html')
+
+    @app.route('/auflage/<int:id>')
+    @login_required
+    def auflage_detail(id):
+        auflage = Auflage.query.get_or_404(id)
+        if auflage.user_id != current_user.id:
+            abort(403)
+        rueckfaelle = auflage.rueckfaelle.order_by(Rueckfall.datum_uhrzeit.desc()).all()
+        return render_template('auflage_detail.html', auflage=auflage, rueckfaelle=rueckfaelle)
+
+    @app.route('/auflage/<int:id>/bearbeiten', methods=['GET', 'POST'])
+    @login_required
+    def auflage_bearbeiten(id):
+        auflage = Auflage.query.get_or_404(id)
+        if auflage.user_id != current_user.id:
+            abort(403)
+        if request.method == 'POST':
+            auflage.beschreibung = request.form.get('beschreibung', '').strip()
+            auflage.grund = request.form.get('grund', '').strip()
+            auflage.ziel = request.form.get('ziel', '').strip()
+            start_str = request.form.get('zeitraum_start', '')
+            ende_str = request.form.get('zeitraum_ende', '')
+            try:
+                auflage.zeitraum_start = datetime.strptime(start_str, '%Y-%m-%d').date()
+                auflage.zeitraum_ende = datetime.strptime(ende_str, '%Y-%m-%d').date() if ende_str else None
+            except ValueError:
+                flash('Ungültiges Datumsformat.', 'danger')
+                return redirect(url_for('auflage_bearbeiten', id=id))
+            auflage.erfahrungen = request.form.get('erfahrungen', '').strip()
+            db.session.commit()
+            flash('Auflage erfolgreich aktualisiert.', 'success')
+            return redirect(url_for('auflage_detail', id=id))
+        return render_template('auflage_bearbeiten.html', auflage=auflage)
+
+    @app.route('/auflage/<int:id>/loeschen', methods=['POST'])
+    @login_required
+    def auflage_loeschen(id):
+        auflage = Auflage.query.get_or_404(id)
+        if auflage.user_id != current_user.id:
+            abort(403)
+        db.session.delete(auflage)
+        db.session.commit()
+        flash('Auflage erfolgreich gelöscht.', 'success')
+        return redirect(url_for('auflagen'))
+
+    # ------------------------------------------------------------------
+    # Rückfälle Routes
+    # ------------------------------------------------------------------
+
+    @app.route('/auflage/<int:auflage_id>/rueckfall/neu', methods=['GET', 'POST'])
+    @login_required
+    def rueckfall_neu(auflage_id):
+        auflage = Auflage.query.get_or_404(auflage_id)
+        if auflage.user_id != current_user.id:
+            abort(403)
+        if request.method == 'POST':
+            beschreibung = request.form.get('beschreibung', '').strip()
+            gefuehle = request.form.get('gefuehle', '').strip()
+            situation = request.form.get('situation', '').strip()
+            lernpunkte = request.form.get('lernpunkte', '').strip()
+            positives_verhalten = request.form.get('positives_verhalten', '').strip()
+            error = None
+            if not beschreibung:
+                error = 'Beschreibung ist erforderlich.'
+            elif not gefuehle:
+                error = 'Gefühle sind erforderlich.'
+            elif not situation:
+                error = 'Situation ist erforderlich.'
+            if error:
+                flash(error, 'danger')
+            else:
+                rueckfall = Rueckfall(
+                    beschreibung=beschreibung,
+                    gefuehle=gefuehle,
+                    situation=situation,
+                    lernpunkte=lernpunkte,
+                    positives_verhalten=positives_verhalten,
+                    auflage_id=auflage_id,
+                    user_id=current_user.id
+                )
+                db.session.add(rueckfall)
+                db.session.commit()
+                flash('Rückfall erfolgreich erfasst.', 'success')
+                return redirect(url_for('auflage_detail', id=auflage_id))
+        return render_template('rueckfall_neu.html', auflage=auflage)
+
+    @app.route('/rueckfall/<int:id>/bearbeiten', methods=['GET', 'POST'])
+    @login_required
+    def rueckfall_bearbeiten(id):
+        rueckfall = Rueckfall.query.get_or_404(id)
+        if rueckfall.user_id != current_user.id:
+            abort(403)
+        if request.method == 'POST':
+            rueckfall.beschreibung = request.form.get('beschreibung', '').strip()
+            rueckfall.gefuehle = request.form.get('gefuehle', '').strip()
+            rueckfall.situation = request.form.get('situation', '').strip()
+            rueckfall.lernpunkte = request.form.get('lernpunkte', '').strip()
+            rueckfall.positives_verhalten = request.form.get('positives_verhalten', '').strip()
+            db.session.commit()
+            flash('Rückfall erfolgreich aktualisiert.', 'success')
+            return redirect(url_for('auflage_detail', id=rueckfall.auflage_id))
+        return render_template('rueckfall_bearbeiten.html', rueckfall=rueckfall)
+
+    @app.route('/rueckfall/<int:id>/loeschen', methods=['POST'])
+    @login_required
+    def rueckfall_loeschen(id):
+        rueckfall = Rueckfall.query.get_or_404(id)
+        if rueckfall.user_id != current_user.id:
+            abort(403)
+        auflage_id = rueckfall.auflage_id
+        db.session.delete(rueckfall)
+        db.session.commit()
+        flash('Rückfall erfolgreich gelöscht.', 'success')
+        return redirect(url_for('auflage_detail', id=auflage_id))
+
+    # ------------------------------------------------------------------
+    # Error handlers
+    # ------------------------------------------------------------------
         return redirect(url_for('index'))
 
     # ------------------------------------------------------------------
