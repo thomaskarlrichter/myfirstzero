@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Komiteetreffen{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col">
+        <h1 class="mb-4">Komiteetreffen</h1>
+        <a href="{{ url_for('treffen_neu') }}" class="btn btn-primary mb-3"><i class="bi bi-plus-circle"></i> Neues Treffen</a>
+        {% if treffen_liste %}
+        <div class="list-group">
+            {% for treffen in treffen_liste %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ treffen.datum.strftime('%d.%m.%Y') }} {{ treffen.uhrzeit.strftime('%H:%M') }} – {{ treffen.ort }}</h5>
+                    <small>Erstellt am {{ treffen.erstellt_am.strftime('%d.%m.%Y %H:%M') }}</small>
+                </div>
+                <p class="mb-1">{% if treffen.beschreibung %}{{ treffen.beschreibung }}{% else %}<em>Keine Beschreibung</em>{% endif %}</p>
+                <div class="mt-2">
+                    <a href="{{ url_for('treffen_detail', id=treffen.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
+                    <a href="{{ url_for('treffen_bearbeiten', id=treffen.id) }}" class="btn btn-outline-secondary btn-sm">Bearbeiten</a>
+                    <form method="POST" action="{{ url_for('treffen_loeschen', id=treffen.id) }}" class="d-inline" onsubmit="return confirm('Treffen wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Löschen</button>
+                    </form>
+                    <a href="{{ url_for('wortmeldung_treffen_neu', treffen_id=treffen.id) }}" class="btn btn-outline-success btn-sm">Wortmeldung anmelden</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Noch keine Treffen geplant.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

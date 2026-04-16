@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Komiteeleitung – Statusverwaltung</h1>
+    <p class="text-muted mb-4">Hier können Sie den Status aller Wortmeldungen ändern (nur für Komiteeleitung).</p>
+
+    <!-- Treffen-Filter Navigation -->
+    <div class="mb-4">
+        <h5 class="mb-3">Wortmeldungen nach Treffen filtern:</h5>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a href="{{ url_for('komiteeleitung') }}" 
+               class="btn btn-sm {% if not treffen_id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                Alle anzeigen
+            </a>
+            {% for treffen in alle_treffen %}
+            <a href="{{ url_for('komiteeleitung', treffen_id=treffen.id) }}" 
+               class="btn btn-sm {% if treffen_id == treffen.id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ treffen.datum.strftime('%d.%m.%Y') }} – {{ treffen.ort }}
+            </a>
+            {% endfor %}
+        </div>
+        {% if aktuelles_treffen %}
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-filter me-2"></i>
+                Zeige Wortmeldungen für Treffen am <strong>{{ aktuelles_treffen.datum.strftime('%d.%m.%Y') }}</strong> in <strong>{{ aktuelles_treffen.ort }}</strong>
+            </div>
+            <a href="{{ url_for('treffen_pdf', id=treffen_id) }}" class="btn btn-sm btn-dark">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF Protokoll exportieren
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if wortmeldungen %}
+
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Text</th>
+                    <th scope="col">Kategorie</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Treffen</th>
+                    <th scope="col">Autor</th>
+                    <th scope="col">Datum</th>
+                    <th scope="col">Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in wortmeldungen %}
+                <tr>
+                    <td>{{ w.id }}</td>
+                    <td class="text-truncate" style="max-width: 200px;">{{ w.text }}</td>
+                    <td>{{ w.kategorie }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if w.status == 'offen' %}bg-primary
+                            {% elif w.status == 'erledigt' %}bg-success
+                            {% elif w.status == 'zurueckgestellt' %}bg-warning
+                            {% elif w.status == 'geloescht' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ w.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if w.treffen and w.treffen.datum %}
+                        <a href="{{ url_for('treffen_detail', id=w.treffen.id) }}">{{ w.treffen.datum.strftime('%d.%m.%Y') }}</a>
+                        {% else %}
+                        <span class="text-muted">Kein Treffen</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ w.autor.username }}</td>
+                    <td>{{ w.datum_uhrzeit.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Status ändern -->
+                            <form method="POST" action="{{ url_for('wortmeldung_status', id=w.id) }}" class="d-flex align-items-center">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="next" value="{{ url_for('komiteeleitung', treffen_id=request.args.get('treffen_id', '')) }}">
+                                <select name="status" class="form-select form-select-sm me-2" style="width: auto;">
+                                    <option value="offen" {% if w.status=='offen' %}selected{% endif %}>offen</option>
+                                    <option value="erledigt" {% if w.status=='erledigt' %}selected{% endif %}>erledigt</option>
+                                    <option value="zurueckgestellt" {% if w.status=='zurueckgestellt' %}selected{% endif %}>zurückgestellt</option>
+                                    <option value="geloescht" {% if w.status=='geloescht' %}selected{% endif %}>gelöscht</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Status ändern</button>
+                            </form>
+
+                            <!-- Bearbeiten -->
+                            <form method="GET" action="{{ url_for('wortmeldung_bearbeiten', id=w.id) }}" class="d-inline">
+                                <input type="hidden" name="next" value="{{ url_for('komiteeleitung', treffen_id=request.args.get('treffen_id', '')) }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary me-1">Bearbeiten</button>
+                            </form>
+
+                            <!-- Löschen -->
+                            <form method="POST" action="{{ url_for('wortmeldung_loeschen', wm_id=w.id) }}" class="d-inline" onsubmit="return confirm('Wortmeldung wirklich löschen?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="next" value="{{ url_for('komiteeleitung', treffen_id=request.args.get('treffen_id', '')) }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger me-1">Löschen</button>
+                            </form>
+
+                            <!-- Verschieben nach Termin -->
+                            <form method="POST" action="{{ url_for('wortmeldung_verschieben', id=w.id) }}" class="d-flex align-items-center">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="next" value="{{ url_for('komiteeleitung', treffen_id=request.args.get('treffen_id', '')) }}">
+                                <select name="treffen_id" class="form-select form-select-sm me-2" style="width: auto;">
+                                    <option value="">-- Treffen wählen --</option>
+                                    {% for treffen in alle_treffen %}
+                                    <option value="{{ treffen.id }}" {% if w.treffen_id == treffen.id %}selected{% endif %}>
+                                        {{ treffen.datum.strftime('%d.%m.%Y') }} – {{ treffen.ort }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-info">Verschieben</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>Es gibt noch keine Wortmeldungen.
+    </div>
+    {% endif %}
+
+    <div class="mt-4 d-flex gap-2">
+        <a href="{{ url_for('komiteeleitung_auflagen') }}" class="btn btn-primary">
+            <i class="bi bi-list-check me-1"></i>Alle Auflagen verwalten
+        </a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Zurück zur Startseite</a>
+    </div>
+</div>
+{% endblock %}

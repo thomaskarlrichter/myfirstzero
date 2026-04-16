@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     erstellt_am = db.Column(db.DateTime, default=datetime.utcnow)
+    is_komiteeleitung = db.Column(db.Boolean, default=False, nullable=False)
 
     wortmeldungen = db.relationship(
         'Wortmeldung', backref='autor', lazy='dynamic',
@@ -43,8 +44,11 @@ class Wortmeldung(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
+    kategorie = db.Column(db.String(50), nullable=False, default='vorfall')  # vorfall, rueckfall, mitteilung_auflage, geheimnis, beziehungsklaerung
+    status = db.Column(db.String(50), nullable=False, default='offen')  # offen, erledigt, zurueckgestellt, geloescht
     datum_uhrzeit = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    treffen_id = db.Column(db.Integer, db.ForeignKey('treffen.id'), nullable=True)  # Optional, falls Wortmeldung keinem Treffen zugeordnet
 
     rueckmeldungen = db.relationship(
         'Rueckmeldung', backref='wortmeldung', lazy='dynamic',
@@ -103,4 +107,21 @@ class Rueckfall(db.Model):
 
     def __repr__(self):
         return f'<Rueckfall {self.id} zu Auflage {self.auflage_id}>'
-        return f'<Rueckmeldung {self.id} zu Wortmeldung {self.wortmeldung_id}>'
+
+class Treffen(db.Model):
+    __tablename__ = 'treffen'
+
+    id = db.Column(db.Integer, primary_key=True)
+    datum = db.Column(db.Date, nullable=False)
+    uhrzeit = db.Column(db.Time, nullable=False)
+    ort = db.Column(db.String(200), nullable=False)
+    beschreibung = db.Column(db.Text, nullable=True)
+    erstellt_am = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    wortmeldungen = db.relationship(
+        'Wortmeldung', backref='treffen', lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+
+    def __repr__(self):
+        return f'<Treffen {self.id} am {self.datum}>'

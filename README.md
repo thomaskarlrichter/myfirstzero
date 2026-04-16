@@ -1,84 +1,211 @@
-# Wortmeldungs-App
+# Komitee-App – Plattform für strukturierte Gruppenarbeit
 
-Eine vollständige Flask-Webanwendung für Wortmeldungen und Rückmeldungen.
+Die Komitee-App ist eine Webanwendung für die Dokumentation und Organisation von Komitee-Treffen basiernd auf den Prinzipien der 12-Schritte-Programme. Sie ermöglicht Mitgliedern, persönliche Auflagen (Fastenvereinbarungen), Rückfälle und Wortmeldungen zu strukturierten Treffen zu erfassen und zu verwalten.
 
-## Features
+## ✨ Funktionen
 
-- **Benutzer-Authentifizierung** – Registrierung, Login/Logout, Passwort-Hashing (PBKDF2 via Werkzeug)
-- **Persönliche Profilseiten** – Jeder User hat eine eigene Seite unter `/user/<username>`
-- **Wortmeldungen** – Erstellen, Anzeigen, Löschen eigener Beiträge
-- **Rückmeldungen** – Kommentare zu Wortmeldungen von allen eingeloggten Usern
-- **CSRF-Schutz** – Alle Formulare via Flask-WTF abgesichert
-- **Responsives Design** – Bootstrap 5 + Bootstrap Icons, deutsche Oberfläche
-- **Paginierung** – Feed und Profilseiten (10 Einträge/Seite)
+### 👥 **Benutzerverwaltung**
+- Registrierung und Anmeldung
+- Persönliches Profil
+- Passwortgeschützte Sessions
 
-## Tech Stack
+### 💬 **Wortmeldungen**
+- Erstellen von Wortmeldungen mit Kategorien:
+  1. **Vorfall** – Allgemeine Vorkommnisse
+  2. **Rückfall** – Bezug auf vorhandene Auflagen
+  3. **Mitteilung zu einer Auflage** – Updates zu Fastenvereinbarungen
+  4. **Geheimnis offenbaren** – Persönliche Mitteilungen
+  5. **Beziehungsklärung mit XYZ** – Konfliktlösung
+- Status-System: `offen`, `erledigt`, `zurückgestellt`, `gelöscht`
+- Zuordnung zu spezifischen Treffen
 
-| Komponente   | Technologie                   |
-|--------------|-------------------------------|
-| Backend      | Python Flask 3.0              |
-| ORM / DB     | SQLAlchemy + SQLite           |
-| Auth         | Flask-Login                   |
-| CSRF-Schutz  | Flask-WTF                     |
-| Frontend     | Bootstrap 5 + Bootstrap Icons |
+### 📅 **Treffen-Verwaltung**
+- Erstellen von Komitee-Treffen mit:
+  - Datum und Uhrzeit
+  - Ort
+  - Beschreibung (optional)
+- Übersicht aller geplanten und vergangenen Treffen
+- Detailansicht mit allen angemeldeten Wortmeldungen
+- Bearbeiten und Löschen von Treffen
 
-## Installation & Start
+### 📋 **Auflagen/Fastenvereinbarungen**
+- Erstellen persönlicher Auflagen mit:
+  - Beschreibung, Grund und Ziel
+  - Zeitraum (Start- und Enddatum)
+  - Erfahrungen (optional)
+- Übersicht aller eigenen Auflagen
+- Detailansicht mit zugehörigen Rückfällen
+- Bearbeiten und Löschen
 
+### 🔄 **Rückfälle**
+- Dokumentation von Rückfällen innerhalb einer Auflage
+- Erfassen von:
+  - Beschreibung
+  - Gefühlen
+  - Situation
+  - Lernpunkten (optional)
+  - Positivem Verhalten (optional)
+- Verknüpfung mit spezifischer Auflage
+
+### 🛠️ **Technische Features**
+- **Flask-basiert** mit SQLAlchemy ORM
+- **Datenbank-Migrationen** mit Flask-Migrate
+- **CSRF-Schutz** für alle Formulare
+- **Responsive Design** mit Bootstrap 5
+- **Rollenbasierte Navigation** (authentifizierte vs. anonyme Benutzer)
+- **Externer Zugriff** via Localtunnel
+
+## 🚀 Schnellstart
+
+### Voraussetzungen
+- Python 3.8+
+- pip
+- SQLite (enthalten)
+
+### Installation
 ```bash
-# 1. In Projektverzeichnis wechseln
-cd wortmeldung-app
+# Repository klonen
+cd /a0/usr/projects/die_komitee_app
 
-# 2. Abhängigkeiten installieren
+# Virtuelle Umgebung erstellen und aktivieren
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# oder venv\Scripts\activate  # Windows
+
+# Abhängigkeiten installieren
 pip install -r requirements.txt
 
-# 3. App starten
-python app.py
+# Datenbank initialisieren
+flask db upgrade
+
+# App starten
+python3 -m flask run --host=0.0.0.0 --port=8080
 ```
 
-Die App ist erreichbar unter: **http://localhost:5000**
-
-Die SQLite-Datenbank (`instance/wortmeldung.db`) wird beim ersten Start automatisch erstellt.
-
-## Projektstruktur
-
-```
-wortmeldung-app/
-├── app.py                   Flask-Applikation & alle Routen
-├── models.py                SQLAlchemy-Modelle
-├── requirements.txt         Python-Abhängigkeiten
-├── README.md                Diese Datei
-├── templates/
-│   ├── base.html            Basis-Layout (Navbar, Flash-Messages)
-│   ├── index.html           Startseite / Feed
-│   ├── login.html           Anmelde-Formular
-│   ├── register.html        Registrierungs-Formular
-│   ├── profile.html         Profilseite
-│   ├── wortmeldung.html     Detail-Ansicht + Rückmeldungen
-│   ├── wortmeldung_neu.html Neue Wortmeldung erstellen
-│   └── error.html           Fehlerseite (403, 404)
-└── static/
-    └── style.css            Zusätzliche CSS-Styles
+### Externer Zugriff (Localtunnel)
+```bash
+# Tunnel starten
+lt --port 8080 --subdomain diekomitee
 ```
 
-## Routen
+Die App ist dann unter **https://diekomitee.loca.lt** erreichbar.
 
-| Route                                      | Methode   | Beschreibung                           |
-|--------------------------------------------|-----------|----------------------------------------|
-| `/`                                        | GET       | Feed aller Wortmeldungen               |
-| `/register`                                | GET, POST | Registrierung                          |
-| `/login`                                   | GET, POST | Anmeldung                              |
-| `/logout`                                  | GET       | Abmeldung                              |
-| `/user/<username>`                         | GET       | Profilseite                            |
-| `/wortmeldung/neu`                         | GET, POST | Neue Wortmeldung (login required)      |
-| `/wortmeldung/<id>`                        | GET       | Detail + Rückmeldungen                 |
-| `/wortmeldung/<id>/loeschen`               | POST      | Wortmeldung löschen (Eigentümer)       |
-| `/wortmeldung/<id>/rueckmeldung`           | POST      | Rückmeldung erstellen (login required) |
-| `/rueckmeldung/<id>/loeschen`              | POST      | Rückmeldung löschen (Eigentümer)       |
+## 📁 Datenmodelle
 
-## Sicherheit
+### User
+- `id`, `username`, `email`, `password_hash`, `erstellt_am`
+- Beziehungen zu: `wortmeldungen`, `rueckmeldungen`, `auflagen`
 
-- Passwörter gehasht mit `werkzeug.security.generate_password_hash` (PBKDF2)
-- CSRF-Token auf allen POST-Formularen
-- `@login_required` schützt alle schreibenden Routen
-- HTTP 403 bei Zugriffsversuchen auf fremde Inhalte
-- Secret Key via Umgebungsvariable konfigurierbar: `SECRET_KEY=...`
+### Wortmeldung
+- `id`, `text`, `kategorie`, `status`, `datum_uhrzeit`, `user_id`, `treffen_id`
+- Beziehung zu: `user` (Autor), `treffen`, `rueckmeldungen`
+
+### Treffen
+- `id`, `datum`, `uhrzeit`, `ort`, `beschreibung`, `erstellt_am`
+- Beziehung zu: `wortmeldungen`
+
+### Auflage
+- `id`, `beschreibung`, `grund`, `ziel`, `zeitraum_start`, `zeitraum_ende`, `erfahrungen`, `erstellt_am`, `user_id`
+- Beziehung zu: `user`, `rueckfaelle`
+
+### Rueckfall
+- `id`, `beschreibung`, `gefuehle`, `situation`, `lernpunkte`, `positives_verhalten`, `datum_uhrzeit`, `auflage_id`, `user_id`
+- Beziehung zu: `auflage`, `user`
+
+### Rueckmeldung
+- `id`, `text`, `datum_uhrzeit`, `user_id`, `wortmeldung_id`
+- Beziehung zu: `user` (Autor), `wortmeldung`
+
+## 🔧 API-Endpunkte
+
+### Authentifizierung
+- `GET/POST /register` – Benutzerregistrierung
+- `GET/POST /login` – Anmeldung
+- `GET /logout` – Abmeldung
+- `GET /profile/<username>` – Profil anzeigen
+
+### Wortmeldungen
+- `GET /` – Alle Wortmeldungen (Startseite)
+- `GET/POST /wortmeldung/neu` – Neue Wortmeldung
+- `GET /wortmeldung/<id>` – Wortmeldungs-Detail
+- `GET/POST /wortmeldung/<id>/bearbeiten` – Bearbeiten
+- `POST /wortmeldung/<id>/loeschen` – Löschen
+- `GET/POST /wortmeldung/<id>/rueckmeldung/neu` – Rückmeldung hinzufügen
+
+### Auflagen
+- `GET /auflagen` – Übersicht aller Auflagen
+- `GET/POST /auflage/neu` – Neue Auflage
+- `GET /auflage/<id>` – Auflage-Detail mit Rückfällen
+- `GET/POST /auflage/<id>/bearbeiten` – Bearbeiten
+- `POST /auflage/<id>/loeschen` – Löschen
+
+### Rückfälle
+- `GET/POST /auflage/<auflage_id>/rueckfall/neu` – Neuer Rückfall
+- `GET/POST /rueckfall/<id>/bearbeiten` – Rückfall bearbeiten
+- `POST /rueckfall/<id>/loeschen` – Rückfall löschen
+
+### Treffen
+- `GET /treffen` – Alle Treffen
+- `GET/POST /treffen/neu` – Neues Treffen
+- `GET /treffen/<id>` – Treffen-Detail mit Wortmeldungen
+- `GET/POST /treffen/<id>/bearbeiten` – Treffen bearbeiten
+- `POST /treffen/<id>/loeschen` – Treffen löschen
+- `GET/POST /treffen/<treffen_id>/wortmeldung/neu` – Wortmeldung zu Treffen anmelden
+
+## 🎨 Templates
+
+- `base.html` – Grundlayout mit Navigation
+- `index.html` – Startseite mit Wortmeldungen
+- `login.html`, `register.html`, `profile.html` – Authentifizierung
+- `wortmeldung*.html` – Wortmeldungs-Verwaltung
+- `auflage*.html` – Auflagen-Verwaltung
+- `rueckfall*.html` – Rückfall-Verwaltung
+- `treffen*.html` – Treffen-Verwaltung
+- `wortmeldung_treffen_neu.html` – Wortmeldung zu Treffen anmelden
+
+## 🔒 Sicherheit
+
+- **Passwort-Hashing** mit Werkzeug
+- **CSRF-Schutz** für alle POST-Formulare
+- **Session-basierte Authentifizierung**
+- **Autorisierung** (nur eigene Inhalte bearbeiten/löschen)
+
+## 📈 Status-System für Wortmeldungen
+
+Jede Wortmeldung hat einen von vier Statuswerten:
+1. **offen** – Standard bei Erstellung
+2. **erledigt** – Von Komiteeleitung als abgeschlossen markiert
+3. **zurückgestellt** – Für später verschoben
+4. **gelöscht** – Nicht mehr relevant (soft delete)
+
+## 🌐 Externer Zugriff
+
+Die App kann über Localtunnel öffentlich erreichbar gemacht werden:
+```bash
+lt --port 8080 --subdomain diekomitee
+```
+
+Danach erreichbar unter: **https://diekomitee.loca.lt**
+
+## 🚧 Geplante Erweiterungen
+
+1. **Zugriffskontrolle** – Komiteeleitung kann Status von Wortmeldungen ändern
+2. **Export-Funktion** – PDF/CSV-Listen für Treffen
+3. **Benachrichtigungen** – Erinnerungen an bevorstehende Treffen
+4. **Teilnehmer-Verwaltung** – Wer nimmt an Treffen teil?
+5. **Statistiken** – Übersicht über Auflagen und Rückfälle
+
+## 📄 Lizenz
+
+Dieses Projekt ist für den internen Gebrauch der Komitee-Gruppe entwickelt worden.
+
+## 👥 Beitragende
+
+- **Agent Zero** – Implementierung
+- **Komitee-Mitglieder** – Konzept und Anforderungen
+
+---
+
+**Letzte Aktualisierung**: April 2026  
+**Version**: 0.3 (mit Treffen-Funktionalität)  
+**Status**: Produktiv einsatzbereit

@@ -49,9 +49,18 @@
             </div>
             {% endfor %}
         </div>
-        {% else %}
-        <p class="text-muted">Noch keine Rückfälle erfasst.</p>
         {% endif %}
+
+        <div class="mt-5">
+            {% if current_user.is_komiteeleitung %}
+            <a href="{{ url_for('komiteeleitung_auflagen') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Zurück zur Admin-Übersicht
+            </a>
+            {% endif %}
+            <a href="{{ url_for('auflagen') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-task me-1"></i>Meine Auflagen
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

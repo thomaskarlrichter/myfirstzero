@@ -37,8 +37,11 @@
                 <textarea class="form-control" id="erfahrungen" name="erfahrungen" rows="3">{{ auflage.erfahrungen if auflage.erfahrungen }}</textarea>
                 <div class="form-text">Was hast du bisher damit erlebt?</div>
             </div>
-            <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+            <button type="submit" class="btn btn-primary shadow-sm px-4">Änderungen speichern</button>
             <a href="{{ url_for('auflage_detail', id=auflage.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+            {% if current_user.is_komiteeleitung %}
+            <a href="{{ url_for('komiteeleitung_auflagen') }}" class="btn btn-link text-muted">Zurück zur Admin-Übersicht</a>
+            {% endif %}
         </form>
     </div>
 </div>

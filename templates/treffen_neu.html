@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Neues Treffen erstellen{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Neues Treffen erstellen</h1>
+        <form method="POST" action="{{ url_for('treffen_neu') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="datum" class="form-label">Datum *</label>
+                <input type="date" class="form-control" id="datum" name="datum" value="{{ request.form.get('datum', '') }}" required>
+                <div class="form-text">YYYY-MM-DD</div>
+            </div>
+            <div class="mb-3">
+                <label for="uhrzeit" class="form-label">Uhrzeit *</label>
+                <input type="time" class="form-control" id="uhrzeit" name="uhrzeit" value="{{ request.form.get('uhrzeit', '') }}" required>
+                <div class="form-text">HH:MM (24h Format)</div>
+            </div>
+            <div class="mb-3">
+                <label for="ort" class="form-label">Ort *</label>
+                <input type="text" class="form-control" id="ort" name="ort" value="{{ request.form.get('ort', '') }}" required>
+                <div class="form-text">Wo findet das Treffen statt?</div>
+            </div>
+            <div class="mb-3">
+                <label for="beschreibung" class="form-label">Beschreibung (optional)</label>
+                <textarea class="form-control" id="beschreibung" name="beschreibung" rows="3">{{ request.form.get('beschreibung', '') }}</textarea>
+                <div class="form-text">Thema oder Hinweise zum Treffen</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Treffen speichern</button>
+            <a href="{{ url_for('treffen_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

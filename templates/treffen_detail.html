@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Treffen: {{ treffen.datum.strftime('%d.%m.%Y') }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1 class="mb-4">Treffen am {{ treffen.datum.strftime('%d.%m.%Y') }} um {{ treffen.uhrzeit.strftime('%H:%M') }}</h1>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ treffen.ort }}</h5>
+                <p class="card-text"><strong>Beschreibung:</strong> {% if treffen.beschreibung %}{{ treffen.beschreibung }}{% else %}<em>Keine Beschreibung</em>{% endif %}</p>
+                <p class="card-text text-muted"><small>Erstellt am {{ treffen.erstellt_am.strftime('%d.%m.%Y %H:%M') }}</small></p>
+                <div class="mt-3">
+                    <a href="{{ url_for('treffen_bearbeiten', id=treffen.id) }}" class="btn btn-outline-secondary btn-sm">Bearbeiten</a>
+                    <form method="POST" action="{{ url_for('treffen_loeschen', id=treffen.id) }}" class="d-inline" onsubmit="return confirm('Treffen wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Löschen</button>
+                    </form>
+                    <a href="{{ url_for('wortmeldung_treffen_neu', treffen_id=treffen.id) }}" class="btn btn-primary btn-sm">Wortmeldung anmelden</a>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="mb-3">Wortmeldungen ({{ wortmeldungen|length }})</h2>
+        {% if wortmeldungen %}
+        <div class="list-group">
+            {% for wm in wortmeldungen %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1"><span class="badge bg-{% if wm.status == 'erledigt' %}success{% elif wm.status == 'zurueckgestellt' %}warning{% elif wm.status == 'geloescht' %}danger{% else %}info{% endif %}">{{ wm.status }}</span> {{ wm.kategorie }} – von {{ wm.autor.username }}</h6>
+                    <small>{{ wm.datum_uhrzeit.strftime('%d.%m.%Y %H:%M') }}</small>
+                </div>
+                <p class="mb-1">{{ wm.text }}</p>
+                <div class="mt-2">
+                    <form method="POST" action="{{ url_for('wortmeldung_status', id=wm.id) }}" class="d-inline me-1">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="next" value="{{ url_for('treffen_detail', id=treffen.id) }}">
+                        <select name="status" class="form-select form-select-sm me-1" style="width: auto;">
+                            <option value="offen" {% if wm.status=='offen' %}selected{% endif %}>offen</option>
+                            <option value="erledigt" {% if wm.status=='erledigt' %}selected{% endif %}>erledigt</option>
+                            <option value="zurueckgestellt" {% if wm.status=='zurueckgestellt' %}selected{% endif %}>zurückgestellt</option>
+                            <option value="geloescht" {% if wm.status=='geloescht' %}selected{% endif %}>gelöscht</option>
+                        </select>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">Status ändern</button>
+                    </form>
+                    <a href="#" class="btn btn-outline-secondary btn-sm me-1">Bearbeiten</a>
+                    <form method="POST" action="#" class="d-inline" onsubmit="return confirm('Wortmeldung wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Löschen</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Noch keine Wortmeldungen angemeldet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

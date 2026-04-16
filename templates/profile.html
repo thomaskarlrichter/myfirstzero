@@ -20,7 +20,7 @@
                         </p>
                         <p class="text-muted mb-0 small">
                             <i class="bi bi-calendar3 me-1"></i>
-                            Mitglied seit {{ profil_user.erstellt_am.strftime('%d.%m.%Y') }}
+                            Mitglied seit {% if profil_user.erstellt_am %}{{ profil_user.erstellt_am.strftime('%d.%m.%Y') }}{% else %}Unbekannt{% endif %}
                         </p>
                     </div>
                     <div class="ms-auto text-center">

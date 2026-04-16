@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Treffen bearbeiten{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Treffen bearbeiten</h1>
+        <form method="POST" action="{{ url_for('treffen_bearbeiten', id=treffen.id) }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="datum" class="form-label">Datum *</label>
+                <input type="date" class="form-control" id="datum" name="datum" value="{{ treffen.datum.strftime('%Y-%m-%d') }}" required>
+                <div class="form-text">YYYY-MM-DD</div>
+            </div>
+            <div class="mb-3">
+                <label for="uhrzeit" class="form-label">Uhrzeit *</label>
+                <input type="time" class="form-control" id="uhrzeit" name="uhrzeit" value="{{ treffen.uhrzeit.strftime('%H:%M') }}" required>
+                <div class="form-text">HH:MM (24h Format)</div>
+            </div>
+            <div class="mb-3">
+                <label for="ort" class="form-label">Ort *</label>
+                <input type="text" class="form-control" id="ort" name="ort" value="{{ treffen.ort }}" required>
+                <div class="form-text">Wo findet das Treffen statt?</div>
+            </div>
+            <div class="mb-3">
+                <label for="beschreibung" class="form-label">Beschreibung (optional)</label>
+                <textarea class="form-control" id="beschreibung" name="beschreibung" rows="3">{{ treffen.beschreibung if treffen.beschreibung }}</textarea>
+                <div class="form-text">Thema oder Hinweise zum Treffen</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+            <a href="{{ url_for('treffen_detail', id=treffen.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Wortmeldung anmelden{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Wortmeldung anmelden</h1>
+        <p class="text-muted">Treffen: <strong>{{ treffen.datum.strftime('%d.%m.%Y') }} {{ treffen.uhrzeit.strftime('%H:%M') }} – {{ treffen.ort }}</strong></p>
+        <form method="POST" action="{{ url_for('wortmeldung_treffen_neu', treffen_id=treffen.id) }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="kategorie" class="form-label">Kategorie *</label>
+                <select class="form-select" id="kategorie" name="kategorie" required>
+                    <option value="vorfall" {% if request.form.get('kategorie') == 'vorfall' %}selected{% endif %}>Vorfall</option>
+                    <option value="rueckfall" {% if request.form.get('kategorie') == 'rueckfall' %}selected{% endif %}>Rückfall</option>
+                    <option value="mitteilung_auflage" {% if request.form.get('kategorie') == 'mitteilung_auflage' %}selected{% endif %}>Mitteilung zu einer Auflage</option>
+                    <option value="geheimnis" {% if request.form.get('kategorie') == 'geheimnis' %}selected{% endif %}>Geheimnis offenbaren (Mitteilung zu mir selbst)</option>
+                    <option value="beziehungsklaerung" {% if request.form.get('kategorie') == 'beziehungsklaerung' %}selected{% endif %}>Beziehungsklärung mit XYZ</option>
+                </select>
+                <div class="form-text">Wähle die Kategorie deiner Wortmeldung.</div>
+            </div>
+            <div class="mb-3">
+                <label for="text" class="form-label">Text der Wortmeldung *</label>
+                <textarea class="form-control" id="text" name="text" rows="6" required>{{ request.form.get('text', '') }}</textarea>
+                <div class="form-text">Beschreibe deine Wortmeldung detailliert.</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Wortmeldung anmelden</button>
+            <a href="{{ url_for('treffen_detail', id=treffen.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
