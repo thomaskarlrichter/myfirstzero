@@ -21,9 +21,14 @@
             {% endfor %}
         </div>
         {% if aktuelles_treffen %}
-        <div class="alert alert-info">
-            <i class="bi bi-filter me-2"></i>
-            Zeige Wortmeldungen für Treffen am <strong>{{ aktuelles_treffen.datum.strftime('%d.%m.%Y') }}</strong> in <strong>{{ aktuelles_treffen.ort }}</strong>
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-filter me-2"></i>
+                Zeige Wortmeldungen für Treffen am <strong>{{ aktuelles_treffen.datum.strftime('%d.%m.%Y') }}</strong> in <strong>{{ aktuelles_treffen.ort }}</strong>
+            </div>
+            <a href="{{ url_for('treffen_pdf', id=treffen_id) }}" class="btn btn-sm btn-dark">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF Protokoll exportieren
+            </a>
         </div>
         {% endif %}
     </div>
@@ -124,7 +129,10 @@
     </div>
     {% endif %}
 
-    <div class="mt-4">
+    <div class="mt-4 d-flex gap-2">
+        <a href="{{ url_for('komiteeleitung_auflagen') }}" class="btn btn-primary">
+            <i class="bi bi-list-check me-1"></i>Alle Auflagen verwalten
+        </a>
         <a href="{{ url_for('index') }}" class="btn btn-secondary">Zurück zur Startseite</a>
     </div>
 </div>

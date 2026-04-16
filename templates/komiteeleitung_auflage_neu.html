@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Neue Auflage für User anlegen{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Neue Auflage für Benutzer anlegen</h1>
+        <form method="POST" action="{{ url_for('komiteeleitung_auflage_neu') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-4">
+                <label for="user_id" class="form-label fw-bold">Begünstigter Benutzer *</label>
+                <select class="form-select border-primary" id="user_id" name="user_id" required>
+                    <option value="" selected disabled>-- Benutzer auswählen --</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if request.form.get('user_id')|int == user.id %}selected{% endif %}>
+                        {{ user.username }} ({{ user.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text text-primary">Wähle die Person aus, für die diese Auflage gelten soll.</div>
+            </div>
+
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-body bg-light rounded shadow-sm">
+                    <div class="mb-3">
+                        <label for="beschreibung" class="form-label">Beschreibung der Auflage *</label>
+                        <textarea class="form-control" id="beschreibung" name="beschreibung" rows="3" required>{{ request.form.get('beschreibung', '') }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="grund" class="form-label">Grund *</label>
+                        <textarea class="form-control" id="grund" name="grund" rows="3" required>{{ request.form.get('grund', '') }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ziel" class="form-label">Ziel *</label>
+                        <textarea class="form-control" id="ziel" name="ziel" rows="2" required>{{ request.form.get('ziel', '') }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="zeitraum_start" class="form-label">Startdatum *</label>
+                            <input type="date" class="form-control" id="zeitraum_start" name="zeitraum_start" value="{{ request.form.get('zeitraum_start', '') }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="zeitraum_ende" class="form-label">Enddatum (optional)</label>
+                            <input type="date" class="form-control" id="zeitraum_ende" name="zeitraum_ende" value="{{ request.form.get('zeitraum_ende', '') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="erfahrungen" class="form-label">Erste Erfahrungen (optional)</label>
+                        <textarea class="form-control" id="erfahrungen" name="erfahrungen" rows="3">{{ request.form.get('erfahrungen', '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">Auflage anlegen</button>
+                <a href="{{ url_for('komiteeleitung_auflagen') }}" class="btn btn-outline-secondary">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

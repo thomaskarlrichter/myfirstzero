@@ -21,7 +21,7 @@
             </div>
             <div class="mb-3">
                 <label for="text" class="form-label">Text der Wortmeldung *</label>
-                <textarea class="form-control" id="text" name="text" rows="6" required>{{ request.form.text if request.form.text }}</textarea>
+                <textarea class="form-control" id="text" name="text" rows="6" required>{{ request.form.get('text', '') }}</textarea>
                 <div class="form-text">Beschreibe deine Wortmeldung detailliert.</div>
             </div>
             <button type="submit" class="btn btn-primary">Wortmeldung anmelden</button>

@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, flash, request, abort
+from flask import Flask, render_template, redirect, url_for, flash, request, abort, send_file
+import io
+from fpdf import FPDF
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
@@ -159,7 +161,7 @@ def create_app():
     @login_required
     def auflage_detail(id):
         auflage = Auflage.query.get_or_404(id)
-        if auflage.user_id != current_user.id:
+        if auflage.user_id != current_user.id and not current_user.is_komiteeleitung:
             abort(403)
         rueckfaelle = auflage.rueckfaelle.order_by(Rueckfall.datum_uhrzeit.desc()).all()
         return render_template('auflage_detail.html', auflage=auflage, rueckfaelle=rueckfaelle)
@@ -168,7 +170,7 @@ def create_app():
     @login_required
     def auflage_bearbeiten(id):
         auflage = Auflage.query.get_or_404(id)
-        if auflage.user_id != current_user.id:
+        if auflage.user_id != current_user.id and not current_user.is_komiteeleitung:
             abort(403)
         if request.method == 'POST':
             auflage.beschreibung = request.form.get('beschreibung', '').strip()
@@ -192,7 +194,7 @@ def create_app():
     @login_required
     def auflage_loeschen(id):
         auflage = Auflage.query.get_or_404(id)
-        if auflage.user_id != current_user.id:
+        if auflage.user_id != current_user.id and not current_user.is_komiteeleitung:
             abort(403)
         db.session.delete(auflage)
         db.session.commit()
@@ -598,10 +600,138 @@ def create_app():
         next_page = request.form.get('next') or url_for('komiteeleitung')
         return redirect(next_page)
 
+    @app.route('/komiteeleitung/auflagen')
+    @login_required
+    @komiteeleitung_required
+    def komiteeleitung_auflagen():
+        alle_auflagen = Auflage.query.order_by(Auflage.erstellt_am.desc()).all()
+        return render_template('komiteeleitung_auflagen.html', auflagen=alle_auflagen)
+
+    @app.route('/komiteeleitung/auflage/neu', methods=['GET', 'POST'])
+    @login_required
+    @komiteeleitung_required
+    def komiteeleitung_auflage_neu():
+        users = User.query.order_by(User.username).all()
+        if request.method == 'POST':
+            target_user_id = request.form.get('user_id', type=int)
+            beschreibung = request.form.get('beschreibung', '').strip()
+            grund = request.form.get('grund', '').strip()
+            ziel = request.form.get('ziel', '').strip()
+            zeitraum_start_str = request.form.get('zeitraum_start', '')
+            zeitraum_ende_str = request.form.get('zeitraum_ende', '')
+            erfahrungen = request.form.get('erfahrungen', '').strip()
+
+            error = None
+            if not target_user_id:
+                error = 'Bitte einen Benutzer auswählen.'
+            elif not beschreibung:
+                error = 'Beschreibung ist erforderlich.'
+            elif not grund:
+                error = 'Grund ist erforderlich.'
+            elif not ziel:
+                error = 'Ziel ist erforderlich.'
+            elif not zeitraum_start_str:
+                error = 'Startdatum ist erforderlich.'
+            else:
+                try:
+                    zeitraum_start = datetime.strptime(zeitraum_start_str, '%Y-%m-%d').date()
+                    zeitraum_ende = datetime.strptime(zeitraum_ende_str, '%Y-%m-%d').date() if zeitraum_ende_str else None
+                except ValueError:
+                    error = 'Ungültiges Datumsformat. Verwende YYYY-MM-DD.'
+
+            if error:
+                flash(error, 'danger')
+            else:
+                auflage = Auflage(
+                    beschreibung=beschreibung,
+                    grund=grund,
+                    ziel=ziel,
+                    zeitraum_start=zeitraum_start,
+                    zeitraum_ende=zeitraum_ende,
+                    erfahrungen=erfahrungen,
+                    user_id=target_user_id
+                )
+                db.session.add(auflage)
+                db.session.commit()
+                flash('Auflage erfolgreich für Benutzer erstellt.', 'success')
+                return redirect(url_for('komiteeleitung_auflagen'))
+        
+        return render_template('komiteeleitung_auflage_neu.html', users=users)
+
+    @app.route('/komiteeleitung/treffen/<int:id>/pdf')
+    @login_required
+    @komiteeleitung_required
+    def treffen_pdf(id):
+        treffen = Treffen.query.get_or_404(id)
+        wortmeldungen = Wortmeldung.query.filter_by(treffen_id=id).order_by(Wortmeldung.datum_uhrzeit.asc()).all()
+
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('helvetica', 'B', 15)
+                self.cell(0, 10, 'Wortmeldungen Protokoll', ln=True, align='C')
+                self.set_font('helvetica', 'I', 10)
+                self.cell(0, 10, f'Treffen am {treffen.datum.strftime("%d.%m.%Y")} in {treffen.ort}', ln=True, align='C')
+                self.ln(10)
+
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('helvetica', 'I', 8)
+                self.cell(0, 10, f'Seite {self.page_no()}', align='C')
+
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_font('helvetica', '', 12)
+
+        if not wortmeldungen:
+            pdf.cell(0, 10, 'Keine Wortmeldungen für dieses Treffen vorhanden.', ln=True)
+        else:
+            for wm in wortmeldungen:
+                # Header for each Wortmeldung
+                pdf.set_font('helvetica', 'B', 12)
+                pdf.set_fill_color(240, 240, 240)
+                pdf.cell(0, 10, f'Wortmeldung #{wm.id} - von {wm.autor.username}', ln=True, fill=True)
+                
+                pdf.set_font('helvetica', 'I', 10)
+                pdf.cell(0, 8, f'Kategorie: {wm.kategorie} | Status: {wm.status} | Zeit: {wm.datum_uhrzeit.strftime("%H:%M")}', ln=True)
+                
+                pdf.set_font('helvetica', '', 11)
+                # Multi-cell for the text to handle wrapping
+                pdf.multi_cell(0, 8, wm.text)
+                
+                # Replies (Rückmeldungen)
+                replies = wm.rueckmeldungen.order_by(Rueckmeldung.datum_uhrzeit.asc()).all()
+                if replies:
+                    pdf.ln(2)
+                    pdf.set_font('helvetica', 'B', 10)
+                    pdf.cell(0, 8, '  Rückmeldungen:', ln=True)
+                    pdf.set_font('helvetica', '', 10)
+                    for rb in replies:
+                        pdf.set_x(20) # Indent replies
+                        reply_text = f'- {rb.autor.username} ({rb.datum_uhrzeit.strftime("%H:%M")}): {rb.text}'
+                        pdf.multi_cell(0, 6, reply_text)
+                
+                pdf.ln(5)
+                pdf.cell(0, 0, '', 'T', ln=True) # Horizontal line
+                pdf.ln(5)
+
+        # Output the PDF to a buffer
+        pdf_output = io.BytesIO()
+        pdf_bytes = pdf.output()
+        pdf_output.write(pdf_bytes)
+        pdf_output.seek(0)
+        
+        filename = f"Protokoll_Treffen_{treffen.datum.strftime('%Y-%m-%d')}.pdf"
+        return send_file(
+            pdf_output,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+
     return app
 
 
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5002)
